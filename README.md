@@ -17,7 +17,7 @@
 
 1. The command to run the script is as follows:
 
-```./replacer.py --path=source_dir --keys=keys.json keys.yaml --dest=destination_dir```
+```./kvrep --path=source_dir --keys=keys.json keys.yaml --dest=destination_dir```
 
 2. In this example:
    1. `source_dir` — the source directory with files.

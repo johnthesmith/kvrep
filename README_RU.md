@@ -21,7 +21,7 @@
 
 1. Команда для запуска скрипта выглядит следующим образом:
 
-```./replacer.py --path=source_dir --keys=keys.json keys.yaml --dest=destination_dir```
+```./kvrep --path=source_dir --keys=keys.json keys.yaml --dest=destination_dir```
 
 2. В данном примере:
     1. source_dir — исходная директория с файлами.
