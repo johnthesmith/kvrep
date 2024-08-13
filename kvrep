@@ -1,0 +1,164 @@
+#!/usr/bin/env python3
+
+"""
+Replacer Tool
+
+Description:
+    A utility for recursively replacing keys in text files within a hierarchical
+    file structure. It allows replacing keys with values defined in JSON and YAML
+    files and supports nested keys. Optionally, it can copy the source files to a
+    different directory before performing the replacements.
+
+Functionality:
+    - Loading and merging keys from JSON and YAML files.
+    - Recursively replacing all keys in text files with values, which may include
+      nested keys.
+    - Optionally copying files from the source directory to a destination directory.
+
+Usage:
+    ./replacer.py --path=<source_directory> --keys=<key_file> [<key_file> ...] [--dest=<destination_directory>]
+
+    Arguments:
+        --path: Path to the source directory with files.
+        --keys: List of files (JSON and YAML) with keys and values.
+        --dest: (Optional) Destination directory for copying files before replacement.
+
+Example:
+    ./replacer.py --path=source_dir --keys=keys.json keys.yaml --dest=destination_dir
+
+Note:
+    - The utility requires Python 3.6 or higher.
+    - For working with YAML files, the `pyyaml` module must be installed.
+
+Authors:
+    - Still Swamp, Solution Architect
+    - ChatGPT version 2.0, AI by OpenAI
+
+Date: 2024.08.13
+"""
+
+import argparse
+import json
+import yaml
+import os
+import re
+import shutil
+
+# Loads data from a JSON or YAML file.
+def load_data(file_path):
+    with open(file_path, 'r') as file:
+        if file_path.endswith('.json'):
+            return json.load(file)
+        elif file_path.endswith('.yaml') or file_path.endswith('.yml'):
+            return yaml.safe_load(file)
+        else:
+            raise ValueError("Unsupported file format")
+
+# Recursively updates the target dictionary with values from the source dictionary.
+def deep_update(target, source):
+    for key, value in source.items():
+        if isinstance(value, dict) and key in target:
+            # Recursively update nested dictionaries
+            deep_update(target[key], value)
+        else:
+            # Update or add the key
+            target[key] = value
+
+# Recursively replaces keys in the content with values from the keys dictionary until stabilization.
+def replace_keys_in_content(content, keys):
+    def replace_match(match):
+        key = match.group(1)
+        keys_list = key.split('.')
+        value = keys
+        for k in keys_list:
+            if isinstance(value, dict):
+                value = value.get(k, f'%{key}%')
+            else:
+                return f'%{key}%'
+        # Convert the value to a string if it is not a string
+        return str(value)
+
+    pattern = re.compile(r'%([^%]+)%')
+
+    previous_content = None
+    while content != previous_content:
+        previous_content = content
+        content = pattern.sub(replace_match, content)
+
+    return content
+
+# Reads a file, performs key replacement, and writes back.
+def replace_keys_in_file(file_path, keys):
+    with open(file_path, 'r') as file:
+        content = file.read()
+
+    content = replace_keys_in_content(content, keys)
+
+    with open(file_path, 'w') as file:
+        file.write(content)
+
+# Recursively processes files in the specified directory.
+def process_files(keys, path):
+    for root, _, files in os.walk(path):
+        for file_name in files:
+            file_path = os.path.join(root, file_name)
+            replace_keys_in_file(file_path, keys)
+
+# Recursively copies files and directories from src to dest
+def copy_directory(src, dest):
+    if not os.path.exists(src):
+        raise FileNotFoundError(f"Source directory '{src}' does not exist.")
+    if os.path.exists(dest):
+        shutil.rmtree(dest)
+    shutil.copytree(src, dest)
+
+# Creating the ArgumentParser object
+parser = argparse.ArgumentParser(
+    description='Recursively replace keys with values in a hierarchical file structure.'
+)
+
+# Adding arguments
+parser.add_argument(
+    '--path', required=True,
+    help='Path with directory hierarchy.'
+)
+parser.add_argument(
+    '--keys',
+    nargs='+',
+    required=True,
+    help='Names of JSON or YAML files containing keys.'
+)
+parser.add_argument(
+    '--dest',
+    help='Destination path to copy files before processing.'
+)
+
+# Parsing arguments
+args = parser.parse_args()
+
+# Checking existence of the source path
+if not os.path.exists(args.path):
+    print(f"Error: Source path '{args.path}' does not exist.")
+    exit(1)
+
+# Initializing an empty dictionary
+keys = {}
+
+# Loading and merging keys from files
+for key_file in args.keys:
+    if not os.path.isfile(key_file):
+        print(f"Error: Key file '{key_file}' does not exist.")
+        exit(1)
+    key_data = load_data(key_file)
+    deep_update(keys, key_data)
+
+# If a destination path is specified, copy the content
+if args.dest:
+    try:
+        copy_directory(args.path, args.dest)
+        process_files(keys, args.dest)
+    except Exception as e:
+        print(f"Error: {e}")
+        exit(1)
+else:
+    process_files(keys, args.path)
