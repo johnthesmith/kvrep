@@ -1,0 +1,4 @@
+#!/bin/bash
+# Install kvrep
+
+sudo sh -c 'cp kvrep /usr/local/bin/ && chmod +x /usr/local/bin/kvrep'

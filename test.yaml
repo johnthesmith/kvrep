@@ -1,4 +1,4 @@
 my:
-  key: "!!!"
-  overrided: "false"
-sub: "===%my.key%==="
+  deploy:
+    maintainer: "Adam"
+    email: "my_email@com.com"

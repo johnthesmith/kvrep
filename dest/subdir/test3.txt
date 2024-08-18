@@ -1,3 +1,0 @@
-Example
-{'key': '!!!', 'overrided': 'true'}
-end

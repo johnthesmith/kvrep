@@ -1,7 +1,24 @@
 {
-    "a": "b",
-    "my":
+    "path":
     {
-        "overrided":"true"
+        "root":"/tmp/project",
+        "lib":"%path.root%/lib"
+    },
+    "user":
+    {
+        "login":"ushatal"
+    },
+    "ip":
+    {
+        "service_one":
+        {
+            "host":"example.com",
+            "port":3202
+        },
+        "service_two":
+        {
+            "host":"man.com",
+            "port":3881
+        }
     }
 }
